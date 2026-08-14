@@ -10,7 +10,9 @@ This is intended to make the process as close to "plug and play" as possible, bu
 - ADB access
 - Launcher Manager installed
 - Projectivy Launcher installed
-- a compatible helper APK or build artifact
+- the published unsigned helper APK:
+  - `firetv-cube-speaker-helper-final-unsigned-1.0.apk`
+- the ability to self-sign APKs before installation
 
 ## Before you start
 
@@ -20,7 +22,8 @@ Make sure you have:
 - ADB debugging enabled
 - Launcher Manager installed and working
 - Projectivy Launcher installed
-- a helper APK ready to install
+- `firetv-cube-speaker-helper-final-unsigned-1.0.apk`
+- a local APK signing method (`apksigner` or equivalent)
 - a recovery path if the launcher state breaks
 
 ## What you need to prepare
@@ -40,8 +43,10 @@ You need two things:
 
 This helper payload must expose the equivalent of:
 
-- `helper.pkg.DualModeClient`
-- `helper.pkg.ForceAudio`
+- `org.ftvcube.helper.DualModeClient`
+- `org.ftvcube.helper.ForceAudio`
+
+The repository APK is intentionally unsigned. Users are expected to sign it themselves before installation.
 
 ## Install order
 
@@ -71,12 +76,20 @@ Verify that pressing `Home` lands on Projectivy.
 
 ### 4. Install the boot helper APK
 
-Install the helper APK that contains:
+Sign and install `firetv-cube-speaker-helper-final-unsigned-1.0.apk`.
+
+It contains:
 
 - `BootReceiver`
 - `MainActivity`
 - `ApplyService`
 - `BootJobService`
+
+The package name in the fully anonymized build is:
+
+```sh
+org.ftvcube.speakerhelper
+```
 
 ### 5. Push the helper runtime payload
 
@@ -112,7 +125,7 @@ At boot, the helper should:
 The command pattern used in the documented setup is:
 
 ```sh
-export CLASSPATH='/cache/firetv-helper.apk'; ( i=0; while [ $i -lt 6 ]; do app_process /system/bin helper.pkg.DualModeClient tv >/dev/null 2>&1; app_process /system/bin helper.pkg.ForceAudio speaker; i=$((i+1)); if [ $i -lt 6 ]; then sleep 15; fi; done ) >/dev/null 2>&1 & am start -n com.spocky.projengmenu/.ui.home.MainActivity
+export CLASSPATH='/cache/firetv-helper.apk'; ( i=0; while [ $i -lt 6 ]; do app_process /system/bin org.ftvcube.helper.DualModeClient tv >/dev/null 2>&1; app_process /system/bin org.ftvcube.helper.ForceAudio speaker; i=$((i+1)); if [ $i -lt 6 ]; then sleep 15; fi; done ) >/dev/null 2>&1 & am start -n com.spocky.projengmenu/.ui.home.MainActivity
 ```
 
 ## First validation
@@ -136,6 +149,7 @@ Then reboot and verify:
 
 Check these first:
 
+- was the unsigned APK signed before installation?
 - was the helper app launched once manually after installation?
 - is Launcher Manager still set to `Custom Launcher Support : Enabled`?
 - is `Projectivy Launcher` still selected?
@@ -148,7 +162,7 @@ Then consult [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 To make this repository fully reproducible for most users, publish:
 
-1. the helper APK
+1. a signed release APK
 2. the helper runtime payload (`firetv-helper.apk`)
 3. exact install commands
 4. firmware notes
